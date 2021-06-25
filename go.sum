@@ -1,0 +1,8 @@
+arp242.net/termtext v0.0.0-20210624234749-36b745617c68 h1:weekfkUukrZbbCloFrxIsCSEB3CdrSbri5YOU3xqcw4=
+arp242.net/termtext v0.0.0-20210624234749-36b745617c68/go.mod h1:vmAmgXrQq0vOb3GkNLXsHf9HY0UdZWiJVjQMyNQlCPw=
+github.com/mattn/go-runewidth v0.0.13 h1:lTGmDsbAYt5DmK6OnoV7EuIF1wEIFAcxld6ypU4OSgU=
+github.com/mattn/go-runewidth v0.0.13/go.mod h1:Jdepj2loyihRzMpdS35Xk/zdY8IAYHsh153qUoGf23w=
+github.com/rivo/uniseg v0.2.0 h1:S1pD9weZBuJdFmowNwbpi7BJ8TNftyUImj/0WQi72jY=
+github.com/rivo/uniseg v0.2.0/go.mod h1:J6wj4VEh+S6ZtnVlnTBMWIodfgj8LQOQFoIToxlJtxc=
+zgo.at/zstd v0.0.0-20210602124748-a4927f23388f h1:eePpe+cTQh3raf9E8N43T/55qL2Qhi4tE9a07YcT61A=
+zgo.at/zstd v0.0.0-20210602124748-a4927f23388f/go.mod h1:sQqrTxBwKW0nlwcOg9RxXB8ikY+NBciJnJRPOq/gEuY=
