@@ -2,7 +2,7 @@ Go package to print nicely aligned tables in the terminal.
 
 ![](screenshot.png)
 
-Import at `arp242.net/acidtab`. Godoc: https://pkg.go.dev/arp242.net/acidtab
+Import at `zgo.at/acidtab`. Godoc: https://godocs.io/zgo.at/acidtab
 
 You can view all these examples in your terminal with `go test -v`.
 

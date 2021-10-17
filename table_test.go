@@ -8,7 +8,7 @@ import (
 	"strings"
 	"testing"
 
-	"arp242.net/acidtab"
+	"zgo.at/acidtab"
 )
 
 func TestTable(t *testing.T) {
@@ -19,9 +19,10 @@ func TestTable(t *testing.T) {
 		Example_vertical,
 		Example_chain,
 		Example_format,
+		Example_stringRows,
 	} {
 		fmt.Println("=> " +
-			strings.Split(runtime.FuncForPC(reflect.ValueOf(f).Pointer()).Name(), ".")[1] +
+			strings.Split(runtime.FuncForPC(reflect.ValueOf(f).Pointer()).Name(), ".")[2] +
 			":\n",
 		)
 		f()
@@ -189,5 +190,52 @@ func Example_format() {
 	// │  Klaes Ashford       │  The belt 🌌   │  Pirate 🕱       │  Singing                 │   😢    │
 	// │  Adolphus Murtry     │  Earth 🌎      │  Security 💂    │  General twattery        │    [31m✘[0m    │
 	// │  Fred Johnson        │  Earth 🌎      │  Colonol 🎖      │  Beltalowda              │    [31m✘[0m    │
+	// └──────────────────────┴────────────────┴─────────────────┴──────────────────────────┴─────────┘
+}
+
+func Example_stringRows() {
+	bold := func(s string) string { return "\x1b[1m" + s + "\x1b[0m" }
+
+	t := acidtab.New(bold("Name"), bold("Origin"), bold("Job"), bold("Speciality"), bold("Alive")).
+		Close(acidtab.CloseAll).
+		AlignCol(4, acidtab.Center).
+		PrintFuncCol(4, func(v interface{}) string {
+			if b, ok := v.(bool); ok {
+				return map[bool]string{
+					true:  "\x1b[32m ✔ \x1b[0m",
+					false: "\x1b[31m✘\x1b[0m",
+				}[b]
+			}
+			return "\x00"
+		})
+
+	t.StringRows("|", "\n", `
+		James Holden       | Montana 🌎   | Captain 🚀    | Tilting windmills      | true
+		Amos Burton        | Baltimore 🌎 | Mechanic 🔧   | Specific people skills | true
+		Naomi Nagata       | Pallas 🌌    | Mechanic 💻   | Spicy red food         | true
+		Alex Kamal         | Mars 🔴      | Pilot 🎧      | Cowboys                | false
+		Joe Miller         | Ceres 🌌     | Cop 👮        | Doors 'n corners       | true
+		Chrisjen Avasarala | Earth 🌏     | Politician 🖕 | Insults                | true
+		Prax Meng          | Ganymede 🌌  | Botanist 🌻   | Plant metaphors        | true
+		Klaes Ashford      | The belt 🌌  | Pirate 🕱      | Singing                | 😢
+		Adolphus Murtry    | Earth 🌎     | Security 💂   | General twattery       | false
+		Fred Johnson       | Earth 🌎     | Colonol 🎖    | Beltalowda             | false
+	`)
+
+	t.Horizontal(os.Stdout)
+	// Output:
+	// ┌──────────────────────┬────────────────┬─────────────────┬──────────────────────────┬─────────┐
+	// │         [1mName[0m         │     [1mOrigin[0m     │       [1mJob[0m       │        [1mSpeciality[0m        │  [1mAlive[0m  │
+	// ├──────────────────────┼────────────────┼─────────────────┼──────────────────────────┼─────────┤
+	// │  James Holden        │  Montana 🌎    │  Captain 🚀     │  Tilting windmills       │  true   │
+	// │  Amos Burton         │  Baltimore 🌎  │  Mechanic 🔧    │  Specific people skills  │  true   │
+	// │  Naomi Nagata        │  Pallas 🌌     │  Mechanic 💻    │  Spicy red food          │  true   │
+	// │  Alex Kamal          │  Mars 🔴       │  Pilot 🎧       │  Cowboys                 │  false  │
+	// │  Joe Miller          │  Ceres 🌌      │  Cop 👮         │  Doors 'n corners        │  true   │
+	// │  Chrisjen Avasarala  │  Earth 🌏      │  Politician 🖕  │  Insults                 │  true   │
+	// │  Prax Meng           │  Ganymede 🌌   │  Botanist 🌻    │  Plant metaphors         │  true   │
+	// │  Klaes Ashford       │  The belt 🌌   │  Pirate 🕱       │  Singing                 │   😢    │
+	// │  Adolphus Murtry     │  Earth 🌎      │  Security 💂    │  General twattery        │  false  │
+	// │  Fred Johnson        │  Earth 🌎      │  Colonol 🎖      │  Beltalowda              │  false  │
 	// └──────────────────────┴────────────────┴─────────────────┴──────────────────────────┴─────────┘
 }

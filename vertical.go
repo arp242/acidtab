@@ -3,7 +3,7 @@ package acidtab
 import (
 	"io"
 
-	"arp242.net/termtext"
+	"zgo.at/termtext"
 )
 
 // Vertical prints the table as vertical.

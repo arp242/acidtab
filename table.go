@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"strings"
 
-	"arp242.net/termtext"
+	"zgo.at/termtext"
 )
 
 type (
@@ -35,6 +35,7 @@ const (
 var (
 	BordersDefault = Borders{'─', '│', '┼', '┌', '┐', '└', '┘', '├', '┤', '┬', '┴'}
 	BordersHeavy   = Borders{'━', '┃', '╋', '┏', '┓', '┗', '┛', '┣', '┫', '┳', '┻'}
+	BordersDouble  = Borders{'═', '║', '╬', '╔', '╗', '╚', '╝', '╠', '╣', '╦', '╩'}
 	BordersASCII   = Borders{'-', '|', '+', '+', '+', '+', '+', '+', '+', '+', '+'}
 	BordersSpace   = Borders{' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '}
 )
@@ -47,6 +48,7 @@ const (
 	Center
 )
 
+// Table defines a table to print.
 type Table struct {
 	header []string
 	rows   [][]string
@@ -61,6 +63,8 @@ type Table struct {
 	printAs  []PrintAs // Printf format verb; defaults to %v
 	printAsF []PrintAsFunc
 	align    []Align
+
+	err error
 }
 
 // New creates a new table with the given headers.
@@ -88,6 +92,8 @@ func (t Table) String() string {
 	return b.String()
 }
 
+// Setters.
+
 func (t *Table) Close(close Close) *Table                 { t.close = close; return t }
 func (t *Table) Pad(pad string) *Table                    { t.pad = pad; return t }
 func (t *Table) Prefix(prefix string) *Table              { t.prefix = prefix; return t }
@@ -96,6 +102,13 @@ func (t *Table) Header(on bool) *Table                    { t.pHeader = on; retu
 func (t *Table) AlignCol(n int, a Align) *Table           { t.align[n] = a; return t }
 func (t *Table) PrintCol(n int, p PrintAs) *Table         { t.printAs[n] = p; return t }
 func (t *Table) PrintFuncCol(n int, p PrintAsFunc) *Table { t.printAsF[n] = p; return t }
+
+// Error returns any error that may have happened when setting the data.
+//
+// The print functions will never set an error.
+func (t Table) Error() error {
+	return t.err
+}
 
 // Width gets the display width of the table, including any padding characters.
 //
@@ -127,7 +140,7 @@ func (t *Table) Grow(n int) {
 }
 
 // Rows adds multiple rows; the number of values should be an exact multitude of
-// the number of headers.
+// the number of headers; it will set an error if it's not.
 //
 // For example:
 //
@@ -137,7 +150,10 @@ func (t *Table) Grow(n int) {
 func (t *Table) Rows(r ...interface{}) *Table {
 	l := len(t.header)
 	if len(r)%l != 0 {
-		panic("wrong number")
+		t.err = fmt.Errorf(
+			"Rows: number of cells (%d) not a multitide of number of headers (%d)",
+			len(r), l)
+		return t
 	}
 	t.Grow(len(r) / l)
 	for ; len(r) > 0; r = r[l:] {
@@ -146,15 +162,43 @@ func (t *Table) Rows(r ...interface{}) *Table {
 	return t
 }
 
+// StringRows adds multiple rows from a single string. Columns are separated by
+// colDelim, and rows by rowDelim.
+//
+// Leading and trailing whitespace will be removed, as will all whitespace
+// surrounding the colDelim. All items will be added as strings, but you can
+// still parse/format things with PrintFuncCol().
+//
+// For example:
+//
+//   t.Rows("|", "\n", `
+//       row1 | row1
+//       row2 | row2
+//   `)
+//
+// The biggest advantage is that it looks a bit nicer if you want to print out
+// loads of static data, since gofmt doesn't format it too well. It's also a bit
+// easier to write.
+func (t *Table) StringRows(colDelim, rowDelim, rows string) *Table {
+	r := strings.Split(strings.TrimSpace(rows), rowDelim)
+	t.Grow(len(r) * len(t.header))
+	for _, rr := range r {
+		t.stringRow(colDelim, rr)
+	}
+	return t
+}
+
 // Row adds a new row.
 //
-// The number of values can be lower than the number of headers; the remaining
-// cells will be filled with spaces.
-//
-// If the number of values is greater it will panic.
+// Remaining columns will be filled with spaces if the number of values is lower
+// than the numbers of headers. It will set an error if the number of values is
+// greater.
 func (t *Table) Row(r ...interface{}) *Table {
 	if len(r) > len(t.header) {
-		panic(fmt.Sprintf("table.Row: too many values (%d); there are only %d headers", len(r), len(t.header)))
+		t.err = fmt.Errorf(
+			"Row: adding row %d: too many values (%d); there are only %d headers",
+			len(t.rows), len(r), len(t.header))
+		return t
 	}
 
 	if len(t.rows) == 0 {
@@ -188,4 +232,13 @@ func (t *Table) Row(r ...interface{}) *Table {
 	}
 	t.rows = append(t.rows, row)
 	return t
+}
+
+func (t *Table) stringRow(colDelim, row string) {
+	cols := strings.Split(row, colDelim)
+	r := make([]interface{}, 0, len(cols))
+	for _, c := range cols {
+		r = append(r, strings.TrimSpace(c))
+	}
+	t.Row(r...)
 }
