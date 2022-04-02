@@ -117,7 +117,7 @@ Outputs:
 
   `acidtab.FormatAsNum` can be used to print numbers with thousands separators
   (only `,` at the moment, not locale-aware). e.g. `FormatColFunc(1,
-  acidtab.FormatAsNum)`.
+  acidtab.FormatAsNum())`.
 
 The column indexes start at zero. Note these are not checked: if you defined
 fewer headers then you will get a panic.

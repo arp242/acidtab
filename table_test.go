@@ -267,11 +267,11 @@ func TestFormatAsFunc(t *testing.T) {
 		FormatColFunc(2, FormatAsFloat(3)).
 		FormatColFunc(3, FormatAsFloat(0)).
 		FormatColFunc(4, FormatAsFloat(0)).
-		FormatColFunc(5, FormatAsNum).
-		FormatColFunc(6, FormatAsNum).
-		FormatColFunc(7, FormatAsNum).
-		FormatColFunc(8, FormatAsNum).
-		FormatColFunc(9, FormatAsNum).
+		FormatColFunc(5, FormatAsNum()).
+		FormatColFunc(6, FormatAsNum()).
+		FormatColFunc(7, FormatAsNum()).
+		FormatColFunc(8, FormatAsNum()).
+		FormatColFunc(9, FormatAsNum()).
 		Row(1.5, 1.5, 0.8, 1.4, 1.6, 1234, uint64(123456789), 12341.123131, int16(-9999))
 
 	test(t, tbl.Horizontal, `
