@@ -9,10 +9,10 @@ import (
 )
 
 type (
-	Close       uint8  // Which sides of the table to "close".
-	Align       uint8  // Alignment for columns.
-	PrintAs     string // How to print a value; fmt format string (e.g. "%q", "%s", etc.)
-	PrintAsFunc func(v interface{}) string
+	Close        uint8  // Which sides of the table to "close".
+	Align        uint8  // Alignment for columns.
+	FormatAs     string // How to print a value; fmt format string (e.g. "%q", "%#v", etc.)
+	FormatAsFunc func(v interface{}) string
 
 	// Borders to use.
 	Borders struct {
@@ -60,8 +60,8 @@ type Table struct {
 	prefix  string  // Print before every line.
 	pHeader bool    // Print header?
 
-	printAs  []PrintAs // Printf format verb; defaults to %v
-	printAsF []PrintAsFunc
+	printAs  []FormatAs // Printf format verb; defaults to %v
+	printAsF []FormatAsFunc
 	align    []Align
 
 	err error
@@ -102,17 +102,18 @@ func (t *Table) AlignCol(n int, a Align) *Table {
 	return t
 }
 
-// PrintCol sets how to print column n, as fmt format string (e.g. "%q", "%s", etc.)
-func (t *Table) PrintCol(n int, p PrintAs) *Table {
-	if t.checkN(n, "PrintCol") {
+// FormatCol sets how to format column n, as fmt format string (e.g. "%q",
+// "%#v", etc.)
+func (t *Table) FormatCol(n int, p FormatAs) *Table {
+	if t.checkN(n, "FormatCol") {
 		t.printAs[n] = p
 	}
 	return t
 }
 
-// PrintFuncCol sets a callback function to print a cell.
-func (t *Table) PrintFuncCol(n int, p PrintAsFunc) *Table {
-	if t.checkN(n, "PrintFuncCol") {
+// FormatColFunc sets a callback function to print a cell.
+func (t *Table) FormatColFunc(n int, p FormatAsFunc) *Table {
+	if t.checkN(n, "FormatColFunc") {
 		t.printAsF[n] = p
 	}
 	return t
@@ -140,8 +141,8 @@ func (t *Table) Header(show bool, header ...string) *Table {
 		// Set new header.
 		case len(t.header) == 0:
 			t.widths = make([]int, len(header))
-			t.printAs = make([]PrintAs, len(header))
-			t.printAsF = make([]PrintAsFunc, len(header))
+			t.printAs = make([]FormatAs, len(header))
+			t.printAsF = make([]FormatAsFunc, len(header))
 			t.align = make([]Align, len(header))
 			for i := range header {
 				t.printAs[i] = "%v"
@@ -150,8 +151,8 @@ func (t *Table) Header(show bool, header ...string) *Table {
 		case len(header) > len(t.header):
 			grow := len(header) - len(t.header)
 			t.widths = append(t.widths, make([]int, grow)...)
-			t.printAs = append(t.printAs, make([]PrintAs, grow)...)
-			t.printAsF = append(t.printAsF, make([]PrintAsFunc, grow)...)
+			t.printAs = append(t.printAs, make([]FormatAs, grow)...)
+			t.printAsF = append(t.printAsF, make([]FormatAsFunc, grow)...)
 			t.align = append(t.align, make([]Align, grow)...)
 			t.printAs[2] = "%v"
 			t.widths[2] = 4
@@ -238,7 +239,7 @@ func (t *Table) Rows(r ...interface{}) *Table {
 //
 // Leading and trailing whitespace will be removed, as will all whitespace
 // surrounding the colDelim. All items will be added as strings, but you can
-// still parse/format things with PrintFuncCol().
+// still parse/format things with FormatColFunc().
 //
 // For example:
 //

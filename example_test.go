@@ -77,10 +77,10 @@ func Example_coloptions() {
 	t.AlignCol(3, acidtab.Right) // Align column 3 and 4 (starts at 0)
 	t.AlignCol(4, acidtab.Center)
 
-	t.PrintCol(3, "%q") // Print column 3 as %q
+	t.FormatCol(3, "%q") // Print column 3 as %q
 
 	// Callback for column 4
-	t.PrintFuncCol(4, func(v interface{}) string {
+	t.FormatColFunc(4, func(v interface{}) string {
 		if b, ok := v.(bool); ok {
 			return map[bool]string{true: "yes", false: "no"}[b]
 		}
@@ -125,7 +125,7 @@ func Example_chain() {
 		Close(acidtab.CloseTop|acidtab.CloseBottom).
 		Prefix(" ").
 		Pad(" ").
-		PrintCol(1, "%q").
+		FormatCol(1, "%q").
 		Rows(
 			"Adolphus Murtry", "Earth", "Security", "General twattery", false,
 			"Fred Johnson", "Earth", "Colonol", "Beltalowda", false,
@@ -154,7 +154,7 @@ func Example_format() {
 	t := acidtab.New(bold("Name"), bold("Origin"), bold("Job"), bold("Speciality"), bold("Alive")).
 		Close(acidtab.CloseAll).
 		AlignCol(4, acidtab.Center).
-		PrintFuncCol(4, func(v interface{}) string {
+		FormatColFunc(4, func(v interface{}) string {
 			if b, ok := v.(bool); ok {
 				return map[bool]string{
 					true:  "\x1b[32m ✔ \x1b[0m",
@@ -200,7 +200,7 @@ func Example_stringRows() {
 	t := acidtab.New(bold("Name"), bold("Origin"), bold("Job"), bold("Speciality"), bold("Alive")).
 		Close(acidtab.CloseAll).
 		AlignCol(4, acidtab.Center).
-		PrintFuncCol(4, func(v interface{}) string {
+		FormatColFunc(4, func(v interface{}) string {
 			if b, ok := v.(bool); ok {
 				return map[bool]string{
 					true:  "\x1b[32m ✔ \x1b[0m",

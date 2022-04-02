@@ -139,7 +139,7 @@ func TestWidthAndClose(t *testing.T) {
 	bold := func(s string) string { return "\x1b[1m" + s + "\x1b[0m" }
 	tbl := New(bold("Name"), bold("Origin"), bold("Job"), bold("Alive")).
 		AlignCol(3, Center).
-		PrintFuncCol(3, func(v interface{}) string {
+		FormatColFunc(3, func(v interface{}) string {
 			if b, ok := v.(bool); ok {
 				return map[bool]string{
 					true:  "\x1b[32m ✔ \x1b[0m",
@@ -246,8 +246,8 @@ func TestAlign(t *testing.T) {
 	`)
 }
 
-func TestPrintAs(t *testing.T) {
-	tbl := New("s").Close(CloseLeft|CloseRight).PrintCol(0, "%q").Row("asd")
+func TestFormatAs(t *testing.T) {
+	tbl := New("s").Close(CloseLeft|CloseRight).FormatCol(0, "%q").Row("asd")
 
 	test(t, tbl.Horizontal, `
 		│    s    │
@@ -260,18 +260,18 @@ func TestPrintAs(t *testing.T) {
 	`)
 }
 
-func TestPrintAsFunc(t *testing.T) {
+func TestFormatAsFunc(t *testing.T) {
 	tbl := New("f1", "f2", "f3", "f4", "f5", "n1", "n2", "n3", "n4").Close(CloseLeft|CloseRight).
-		PrintFuncCol(0, PrintAsFloat(2)).
-		PrintFuncCol(1, PrintAsFloat(6)).
-		PrintFuncCol(2, PrintAsFloat(3)).
-		PrintFuncCol(3, PrintAsFloat(0)).
-		PrintFuncCol(4, PrintAsFloat(0)).
-		PrintFuncCol(5, PrintAsNum).
-		PrintFuncCol(6, PrintAsNum).
-		PrintFuncCol(7, PrintAsNum).
-		PrintFuncCol(8, PrintAsNum).
-		PrintFuncCol(9, PrintAsNum).
+		FormatColFunc(0, FormatAsFloat(2)).
+		FormatColFunc(1, FormatAsFloat(6)).
+		FormatColFunc(2, FormatAsFloat(3)).
+		FormatColFunc(3, FormatAsFloat(0)).
+		FormatColFunc(4, FormatAsFloat(0)).
+		FormatColFunc(5, FormatAsNum).
+		FormatColFunc(6, FormatAsNum).
+		FormatColFunc(7, FormatAsNum).
+		FormatColFunc(8, FormatAsNum).
+		FormatColFunc(9, FormatAsNum).
 		Row(1.5, 1.5, 0.8, 1.4, 1.6, 1234, uint64(123456789), 12341.123131, int16(-9999))
 
 	test(t, tbl.Horizontal, `

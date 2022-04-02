@@ -5,16 +5,16 @@ import (
 	"strconv"
 )
 
-// PrintAsFloat prints n as a float with the given percision.
+// FormatAsFloat prints n as a float with the given percision.
 //
 // Use perc=0 to round to the nearest natural number.
-func PrintAsFloat(perc int) PrintAsFunc {
+func FormatAsFloat(perc int) FormatAsFunc {
 	return func(v interface{}) string {
 		var f float64
 		switch vv := v.(type) {
 		default:
-			// TODO: maybe add error return to PrintAsFunc?
-			panic(fmt.Sprintf("acidtab.PrintAsFloat: not a float but %T: %[1]v", v))
+			// TODO: maybe add error return to FormatAsFunc?
+			panic(fmt.Sprintf("acidtab.FormatAsFloat: not a float but %T: %[1]v", v))
 
 		case float64:
 			f = vv
@@ -29,8 +29,8 @@ func PrintAsFloat(perc int) PrintAsFunc {
 	}
 }
 
-// PrintAsNum prints n as a number with , as thousands separators.
-func PrintAsNum(n interface{}) string {
+// FormatAsNum prints n as a number with , as thousands separators.
+func FormatAsNum(n interface{}) string {
 	// TODO: allow configuring this.
 	// There's also "indian style" where the grouping is different, but full
 	// locale parsing isn't really a goal here.
@@ -39,7 +39,7 @@ func PrintAsNum(n interface{}) string {
 
 	switch nn := n.(type) {
 	default:
-		panic(fmt.Sprintf("acidtab.PrintAsNum: unsupported type: %T: %[1]v", nn))
+		panic(fmt.Sprintf("acidtab.FormatAsNum: unsupported type: %T: %[1]v", nn))
 
 	// Not really numbers, but just allow it.
 	case string:

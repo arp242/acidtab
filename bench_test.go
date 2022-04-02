@@ -7,7 +7,7 @@ var benchTable = func() *Table {
 		Header(true).
 		Prefix("  ").
 		AlignCol(4, Center).
-		PrintFuncCol(4, func(v interface{}) string {
+		FormatColFunc(4, func(v interface{}) string {
 			switch vv := v.(type) {
 			default:
 				return "\x00"
