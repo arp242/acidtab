@@ -18,9 +18,9 @@ type wrapWriter struct {
 }
 
 func (w wrapWriter) Write(b []byte) (int, error)       { return w.w.Write(b) }
-func (w wrapWriter) WriteString(s string) (int, error) { return w.w.Write([]byte(s)) }
-func (w wrapWriter) WriteByte(b byte) error            { _, err := w.w.Write([]byte{b}); return err }
-func (w wrapWriter) WriteRune(r rune) (int, error)     { return w.w.Write([]byte(string(r))) }
+func (w wrapWriter) WriteString(s string) (int, error) { return w.Write([]byte(s)) }
+func (w wrapWriter) WriteByte(b byte) error            { _, err := w.Write([]byte{b}); return err }
+func (w wrapWriter) WriteRune(r rune) (int, error)     { return w.Write([]byte(string(r))) }
 
 func getWriter(w io.Writer) writer {
 	if ww, ok := w.(writer); ok {
@@ -29,14 +29,14 @@ func getWriter(w io.Writer) writer {
 	return wrapWriter{w}
 }
 
-func runes(r rune, n int) string {
+func fillRunes(r rune, n int) string {
 	d := make([]rune, n)
 	for i := range d {
 		d[i] = r
 	}
 	return string(d)
 }
-func bytes(r byte, n int) string {
+func fillBytes(r byte, n int) string {
 	d := make([]byte, n)
 	for i := range d {
 		d[i] = r
@@ -46,7 +46,7 @@ func bytes(r byte, n int) string {
 
 func (t Table) Horizontal(w io.Writer) {
 	b := getWriter(w)
-	padStr := runes(t.borders.Line, termtext.Width(t.pad))
+	padStr := fillRunes(t.borders.Line, termtext.Width(t.pad))
 
 	if t.close&CloseTop != 0 {
 		t.horiLine(b, padStr,
@@ -79,13 +79,22 @@ func (t Table) horiRow(b writer, row []string, alwaysCenter bool) {
 		b.WriteRune(t.borders.Bar)
 	}
 	for i := range row {
+		/// In case the header was set to something larger later on.
+		if i > len(t.header)-1 {
+			continue
+		}
+
 		b.WriteString(t.pad)
-		align := bytes(' ', t.widths[i]-termtext.Width(row[i]))
+		align := fillBytes(' ', t.widths[i]-termtext.Width(row[i]))
 		a := t.align[i]
 		if alwaysCenter {
 			a = Center
 		}
 		switch a {
+		case Auto:
+			// TODO: this is set in a different location, and not correct after
+			// increasing the header size.
+			fallthrough
 		case Left:
 			b.WriteString(row[i])
 			if t.close&CloseRight != 0 || i != len(row)-1 {
@@ -121,7 +130,7 @@ func (t Table) horiLine(b writer, padStr string, cross, first, last rune) {
 	}
 	for i := range t.header {
 		b.WriteString(padStr)
-		b.WriteString(runes(t.borders.Line, t.widths[i]))
+		b.WriteString(fillRunes(t.borders.Line, t.widths[i]))
 		b.WriteString(padStr)
 		if i < len(t.header)-1 {
 			b.WriteRune(cross)

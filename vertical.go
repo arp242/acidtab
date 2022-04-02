@@ -26,7 +26,7 @@ func (t Table) Vertical(w io.Writer) {
 		}
 	}
 	for i := range t.header {
-		alignHeader[i] = bytes(' ', headerWidth-termtext.Width(t.header[i]))
+		alignHeader[i] = fillBytes(' ', headerWidth-termtext.Width(t.header[i]))
 	}
 	for _, w := range t.widths {
 		if w > valueWidth {
@@ -34,9 +34,9 @@ func (t Table) Vertical(w io.Writer) {
 		}
 	}
 	var (
-		padStr    = runes(t.borders.Line, padWidth)
-		valueStr  = runes(t.borders.Line, valueWidth)
-		headerStr = runes(t.borders.Line, headerWidth)
+		padStr    = fillRunes(t.borders.Line, padWidth)
+		valueStr  = fillRunes(t.borders.Line, valueWidth)
+		headerStr = fillRunes(t.borders.Line, headerWidth)
 	)
 
 	/// Write the actual table.
@@ -63,10 +63,15 @@ func (t Table) Vertical(w io.Writer) {
 			b.WriteRune(t.borders.Bar)
 
 			/// Write data.
+			str := ""
+			if len(t.rows[i])-1 >= j { /// In case the header size changed.
+				str = t.rows[i][j]
+			}
+
 			b.WriteString(t.pad)
-			b.WriteString(t.rows[i][j])
+			b.WriteString(str)
 			if t.close&CloseRight != 0 {
-				b.WriteString(bytes(' ', valueWidth-termtext.Width(t.rows[i][j])))
+				b.WriteString(fillBytes(' ', valueWidth-termtext.Width(str)))
 				b.WriteString(t.pad)
 				b.WriteRune(t.borders.Bar)
 			}

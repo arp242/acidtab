@@ -1,159 +1,145 @@
-package acidtab_test
+package acidtab
 
 import (
+	"bytes"
 	"fmt"
-	"os"
-	"reflect"
-	"runtime"
+	"io"
 	"strings"
 	"testing"
-
-	"zgo.at/acidtab"
 )
 
-func TestTable(t *testing.T) {
-	for _, f := range []func(){
-		Example_basic,
-		Example_options,
-		Example_coloptions,
-		Example_vertical,
-		Example_chain,
-		Example_format,
-		Example_stringRows,
-	} {
-		fmt.Println("=> " +
-			strings.Split(runtime.FuncForPC(reflect.ValueOf(f).Pointer()).Name(), ".")[2] +
-			":\n",
-		)
-		f()
-		fmt.Println()
+func trim(s string) string {
+	lines := strings.Split(strings.Trim(s, "\t\n"), "\n")
+	for i := range lines {
+		lines[i] = strings.TrimLeft(lines[i], "\t")
+	}
+	return strings.Join(lines, "\n") + "\n"
+}
+
+func test(t *testing.T, f func(io.Writer), want string) {
+	t.Helper()
+	want = trim(want)
+	have := new(bytes.Buffer)
+	f(have)
+	if have.String() != want {
+		t.Errorf("\nwant:\n%[1]s\nhave:\n%[2]s\nwant: %[1]q\nhave: %[2]q", want, have.String())
 	}
 }
 
-func Example_basic() {
-	// Create a new table
-	t := acidtab.New("Name", "Origin", "Job", "Speciality", "Alive")
-
-	// Add rows to it
-	t.Row("James Holden", "Montana", "Captain", "Tilting windmills", true)
-	t.Row("Amos Burton", "Baltimore", "Mechanic", "Specific people skills", true)
-
-	// And then print it:
-	t.Horizontal(os.Stdout)
-
-	// Output:
-	//       Name      │   Origin    │    Job     │        Speciality        │  Alive
-	// ────────────────┼─────────────┼────────────┼──────────────────────────┼─────────
-	//   James Holden  │  Montana    │  Captain   │  Tilting windmills       │  true
-	//   Amos Burton   │  Baltimore  │  Mechanic  │  Specific people skills  │  true
+func errorContains(have error, want string) bool {
+	if have == nil {
+		return want == ""
+	}
+	if want == "" {
+		return false
+	}
+	return strings.Contains(have.Error(), want)
 }
 
-func Example_options() {
-	t := acidtab.New("Name", "Origin", "Job", "Speciality", "Alive")
-
-	t.Borders(acidtab.BordersHeavy)                 // Set different borders.
-	t.Pad(" ")                                      // Pad cells with one space.
-	t.Prefix(" ")                                   // Prefix every line with a space.
-	t.Close(acidtab.CloseTop | acidtab.CloseBottom) // "Close" top and bottom.
-	t.Header(false)                                 // Don't print the header.
-
-	t.Row("Naomi Nagata", "Pallas", "Mechanic", "Spicy red food", true)
-	t.Row("Alex Kamal", "Mars", "Pilot", "Cowboys", false)
-
-	t.Horizontal(os.Stdout)
-
-	// Output:
-	//  ━━━━━━━━━━━━━━┳━━━━━━━━┳━━━━━━━━━━┳━━━━━━━━━━━━━━━━┳━━━━━━━
-	//   Naomi Nagata ┃ Pallas ┃ Mechanic ┃ Spicy red food ┃ true
-	//   Alex Kamal   ┃ Mars   ┃ Pilot    ┃ Cowboys        ┃ false
-	//  ━━━━━━━━━━━━━━┻━━━━━━━━┻━━━━━━━━━━┻━━━━━━━━━━━━━━━━┻━━━━━━━
-}
-
-func Example_coloptions() {
-	t := acidtab.New("Name", "Origin", "Job", "Speciality", "Alive")
-	t.Close(acidtab.CloseLeft | acidtab.CloseRight)
-
-	t.AlignCol(3, acidtab.Right) // Align column 3 and 4 (starts at 0)
-	t.AlignCol(4, acidtab.Center)
-
-	t.PrintCol(3, "%q") // Print column 3 as %q
-
-	// Callback for column 4
-	t.PrintFuncCol(4, func(v interface{}) string {
-		if b, ok := v.(bool); ok {
-			return map[bool]string{true: "yes", false: "no"}[b]
+func TestHeader(t *testing.T) {
+	t.Run("same", func(t *testing.T) {
+		tbl := New("one", "two").Close(CloseLeft|CloseRight).Rows("aa1", "aa2", "bb1", "bb2").Header(true, "1", "2").Row("cc1", "cc2")
+		if err := tbl.Error(); err != nil {
+			t.Fatal(err)
 		}
-		// Return a NULL byte to fall back to regular formatting.
-		return "\x00"
+
+		test(t, tbl.Horizontal, `
+			│   1   │   2   │
+			├───────┼───────┤
+			│  aa1  │  aa2  │
+			│  bb1  │  bb2  │
+			│  cc1  │  cc2  │
+		`)
+		test(t, tbl.Vertical, `
+			│  1  │  aa1  │
+			│  2  │  aa2  │
+			├─────┼───────┤
+			│  1  │  bb1  │
+			│  2  │  bb2  │
+			├─────┼───────┤
+			│  1  │  cc1  │
+			│  2  │  cc2  │
+		`)
 	})
 
-	t.Row("Joe Miller", "Ceres", "Cop", "Doors 'n corners", false)
-	t.Row("Chrisjen Avasarala", "Earth", "Politician", "Insults", true)
+	t.Run("shrink", func(t *testing.T) {
+		tbl := New("one", "two").Close(CloseLeft|CloseRight).Rows("aa1", "aa2", "bb1", "bb2").Header(true, "one").Row("cc1")
+		if err := tbl.Error(); err != nil {
+			t.Fatal(err)
+		}
 
-	t.Horizontal(os.Stdout)
+		test(t, tbl.Horizontal, `
+			│  one  │
+			├───────┤
+			│  aa1  │
+			│  bb1  │
+			│  cc1  │
+		`)
+		test(t, tbl.Vertical, `
+			│  one  │  aa1  │
+			├───────┼───────┤
+			│  one  │  bb1  │
+			├───────┼───────┤
+			│  one  │  cc1  │
+		`)
+	})
 
-	// Output:
-	// │         Name         │  Origin  │     Job      │      Speciality      │  Alive  │
-	// ├──────────────────────┼──────────┼──────────────┼──────────────────────┼─────────┤
-	// │  Joe Miller          │  Ceres   │  Cop         │  "Doors 'n corners"  │   no    │
-	// │  Chrisjen Avasarala  │  Earth   │  Politician  │           "Insults"  │   yes   │
+	t.Run("grow", func(t *testing.T) {
+		tbl := New("one", "two").Close(CloseLeft|CloseRight).
+			Rows("aa1", "aa2", "bb1", "bb2").
+			Header(true, "one", "two", "three").
+			Row("cc1", "cc2", "cc3")
+		if err := tbl.Error(); err != nil {
+			t.Fatal(err)
+		}
+
+		test(t, tbl.Horizontal, `
+			│  one  │  two  │  three  │
+			├───────┼───────┼─────────┤
+			│  aa1  │  aa2  │         │
+			│  bb1  │  bb2  │         │
+			│  cc1  │  cc2  │  cc3    │
+		`)
+		test(t, tbl.Vertical, `
+			│  one    │  aa1    │
+			│  two    │  aa2    │
+			│  three  │         │
+			├─────────┼─────────┤
+			│  one    │  bb1    │
+			│  two    │  bb2    │
+			│  three  │         │
+			├─────────┼─────────┤
+			│  one    │  cc1    │
+			│  two    │  cc2    │
+			│  three  │  cc3    │
+		`)
+	})
 }
 
-func Example_vertical() {
-	t := acidtab.New("Name", "Origin", "Job", "Speciality", "Alive")
-	t.Row("Prax Meng", "Ganymede", "Botanist", "Plant metaphors", true)
-	t.Row("Klaes Ashford", "The belt", "Pirate", "Singing", "😢")
-	t.Vertical(os.Stdout)
+func TestErrors(t *testing.T) {
+	tests := []struct {
+		tbl     *Table
+		wantErr string
+	}{
+		{New("one", "two").Close(CloseLeft | CloseRight).Rows("aa1"), "not a multitude"},
+		{New("one", "two").Close(CloseLeft|CloseRight).Row("aa1", "aa2", "aa3"), "too many values"},
+		{New("asd").AlignCol(99, Center), "cannot set column 99 as there are only 1 columns"},
+	}
 
-	// Output:
-	//   Name        │  Prax Meng
-	//   Origin      │  Ganymede
-	//   Job         │  Botanist
-	//   Speciality  │  Plant metaphors
-	//   Alive       │  true
-	// ──────────────┼───────────────────
-	//   Name        │  Klaes Ashford
-	//   Origin      │  The belt
-	//   Job         │  Pirate
-	//   Speciality  │  Singing
-	//   Alive       │  😢
+	for _, tt := range tests {
+		t.Run("", func(t *testing.T) {
+			if !errorContains(tt.tbl.Error(), tt.wantErr) {
+				t.Errorf("wrong error\nwant: %s\nhave: %s", tt.wantErr, tt.tbl.Error())
+			}
+		})
+	}
 }
 
-func Example_chain() {
-	acidtab.New("Name", "Origin", "Job", "Speciality", "Alive").
-		Close(acidtab.CloseTop|acidtab.CloseBottom).
-		Prefix(" ").
-		Pad(" ").
-		PrintCol(1, "%q").
-		Rows(
-			"Adolphus Murtry", "Earth", "Security", "General twattery", false,
-			"Fred Johnson", "Earth", "Colonol", "Beltalowda", false,
-		).
-		Vertical(os.Stdout)
-
-	// Output:
-	//  ────────────┬──────────────────
-	//   Name       │ Adolphus Murtry
-	//   Origin     │ "Earth"
-	//   Job        │ Security
-	//   Speciality │ General twattery
-	//   Alive      │ false
-	//  ────────────┼──────────────────
-	//   Name       │ Fred Johnson
-	//   Origin     │ "Earth"
-	//   Job        │ Colonol
-	//   Speciality │ Beltalowda
-	//   Alive      │ false
-	//  ────────────┴──────────────────
-}
-
-func Example_format() {
+func TestWidthAndClose(t *testing.T) {
 	bold := func(s string) string { return "\x1b[1m" + s + "\x1b[0m" }
-
-	t := acidtab.New(bold("Name"), bold("Origin"), bold("Job"), bold("Speciality"), bold("Alive")).
-		Close(acidtab.CloseAll).
-		AlignCol(4, acidtab.Center).
-		PrintFuncCol(4, func(v interface{}) string {
+	tbl := New(bold("Name"), bold("Origin"), bold("Job"), bold("Alive")).
+		AlignCol(3, Center).
+		PrintFuncCol(3, func(v interface{}) string {
 			if b, ok := v.(bool); ok {
 				return map[bool]string{
 					true:  "\x1b[32m ✔ \x1b[0m",
@@ -161,81 +147,137 @@ func Example_format() {
 				}[b]
 			}
 			return "\x00"
-		})
+		}).
+		Rows("James Holden", "Montana 🌎", "Captain 🚀", true)
+	if tbl.Error() != nil {
+		t.Fatal(tbl.Error())
+	}
 
-	t.Rows(
-		"James Holden", "Montana 🌎", "Captain 🚀", "Tilting windmills", true,
-		"Amos Burton", "Baltimore 🌎", "Mechanic 🔧", "Specific people skills", true,
-		"Naomi Nagata", "Pallas 🌌", "Mechanic 💻", "Spicy red food", true,
-		"Alex Kamal", "Mars 🔴", "Pilot 🎧", "Cowboys", false,
-		"Joe Miller", "Ceres 🌌", "Cop 👮", "Doors 'n corners", true,
-		"Chrisjen Avasarala", "Earth 🌏", "Politician 🖕", "Insults", true,
-		"Prax Meng", "Ganymede 🌌", "Botanist 🌻", "Plant metaphors", true,
-		"Klaes Ashford", "The belt 🌌", "Pirate 🕱", "Singing", "😢",
-		"Adolphus Murtry", "Earth 🌎", "Security 💂", "General twattery", false,
-		"Fred Johnson", "Earth 🌎", "Colonol 🎖", "Beltalowda", false)
+	if tbl.Width() != 56 {
+		t.Error(tbl.Width())
+	}
 
-	t.Horizontal(os.Stdout)
-	// Output:
-	// ┌──────────────────────┬────────────────┬─────────────────┬──────────────────────────┬─────────┐
-	// │         [1mName[0m         │     [1mOrigin[0m     │       [1mJob[0m       │        [1mSpeciality[0m        │  [1mAlive[0m  │
-	// ├──────────────────────┼────────────────┼─────────────────┼──────────────────────────┼─────────┤
-	// │  James Holden        │  Montana 🌎    │  Captain 🚀     │  Tilting windmills       │   [32m ✔ [0m   │
-	// │  Amos Burton         │  Baltimore 🌎  │  Mechanic 🔧    │  Specific people skills  │   [32m ✔ [0m   │
-	// │  Naomi Nagata        │  Pallas 🌌     │  Mechanic 💻    │  Spicy red food          │   [32m ✔ [0m   │
-	// │  Alex Kamal          │  Mars 🔴       │  Pilot 🎧       │  Cowboys                 │    [31m✘[0m    │
-	// │  Joe Miller          │  Ceres 🌌      │  Cop 👮         │  Doors 'n corners        │   [32m ✔ [0m   │
-	// │  Chrisjen Avasarala  │  Earth 🌏      │  Politician 🖕  │  Insults                 │   [32m ✔ [0m   │
-	// │  Prax Meng           │  Ganymede 🌌   │  Botanist 🌻    │  Plant metaphors         │   [32m ✔ [0m   │
-	// │  Klaes Ashford       │  The belt 🌌   │  Pirate 🕱       │  Singing                 │   😢    │
-	// │  Adolphus Murtry     │  Earth 🌎      │  Security 💂    │  General twattery        │    [31m✘[0m    │
-	// │  Fred Johnson        │  Earth 🌎      │  Colonol 🎖      │  Beltalowda              │    [31m✘[0m    │
-	// └──────────────────────┴────────────────┴─────────────────┴──────────────────────────┴─────────┘
+	tbl = tbl.Close(CloseLeft)
+	if tbl.Width() != 57 {
+		t.Error(tbl.Width())
+	}
+
+	tbl = tbl.Close(CloseLeft | CloseRight)
+	if tbl.Width() != 58 {
+		t.Error(tbl.Width())
+	}
+
+	test(t, tbl.Horizontal, ""+
+		"│      \x1b[1mName\x1b[0m      │    \x1b[1mOrigin\x1b[0m    │     \x1b[1mJob\x1b[0m      │  \x1b[1mAlive\x1b[0m  │\n"+
+		"├────────────────┼──────────────┼──────────────┼─────────┤\n"+
+		"│  James Holden  │  Montana 🌎  │  Captain 🚀  │   \x1b[32m ✔ \x1b[0m   │")
+
+	test(t, tbl.Vertical, ""+
+		"│  \x1b[1mName\x1b[0m    │  James Holden  │\n"+
+		"│  \x1b[1mOrigin\x1b[0m  │  Montana 🌎    │\n"+
+		"│  \x1b[1mJob\x1b[0m     │  Captain 🚀    │\n"+
+		"│  \x1b[1mAlive\x1b[0m   │  \x1b[32m ✔ \x1b[0m           │\n")
 }
 
-func Example_stringRows() {
-	bold := func(s string) string { return "\x1b[1m" + s + "\x1b[0m" }
+func TestGrow(t *testing.T) {
+	tbl := New("asd")
 
-	t := acidtab.New(bold("Name"), bold("Origin"), bold("Job"), bold("Speciality"), bold("Alive")).
-		Close(acidtab.CloseAll).
-		AlignCol(4, acidtab.Center).
-		PrintFuncCol(4, func(v interface{}) string {
-			if b, ok := v.(bool); ok {
-				return map[bool]string{
-					true:  "\x1b[32m ✔ \x1b[0m",
-					false: "\x1b[31m✘\x1b[0m",
-				}[b]
-			}
-			return "\x00"
-		})
+	test := func(want string) {
+		t.Helper()
+		if have := fmt.Sprint(cap(tbl.rows), len(tbl.rows), tbl.rows); have != want {
+			t.Errorf("\nhave: %s\nwant: %s", have, want)
+		}
+	}
 
-	t.StringRows("|", "\n", `
-		James Holden       | Montana 🌎   | Captain 🚀    | Tilting windmills      | true
-		Amos Burton        | Baltimore 🌎 | Mechanic 🔧   | Specific people skills | true
-		Naomi Nagata       | Pallas 🌌    | Mechanic 💻   | Spicy red food         | true
-		Alex Kamal         | Mars 🔴      | Pilot 🎧      | Cowboys                | false
-		Joe Miller         | Ceres 🌌     | Cop 👮        | Doors 'n corners       | true
-		Chrisjen Avasarala | Earth 🌏     | Politician 🖕 | Insults                | true
-		Prax Meng          | Ganymede 🌌  | Botanist 🌻   | Plant metaphors        | true
-		Klaes Ashford      | The belt 🌌  | Pirate 🕱      | Singing                | 😢
-		Adolphus Murtry    | Earth 🌎     | Security 💂   | General twattery       | false
-		Fred Johnson       | Earth 🌎     | Colonol 🎖    | Beltalowda             | false
+	test("0 0 []")
+
+	tbl.Grow(8)
+	test("8 0 []")
+
+	tbl.Row("zxc")
+	test("8 1 [[zxc]]")
+
+	tbl.Grow(8)
+	test("16 1 [[zxc]]")
+}
+
+func TestStringRows(t *testing.T) {
+	tbl := New("one", "two", "three").Close(CloseLeft|CloseRight).StringRows("\x00", "\n", false,
+		"1\x002\x003\n4\x005\x006")
+	test(t, tbl.Horizontal, `
+		│  one  │  two  │  three  │
+		├───────┼───────┼─────────┤
+		│  1    │  2    │  3      │
+		│  4    │  5    │  6      │
 	`)
 
-	t.Horizontal(os.Stdout)
-	// Output:
-	// ┌──────────────────────┬────────────────┬─────────────────┬──────────────────────────┬─────────┐
-	// │         [1mName[0m         │     [1mOrigin[0m     │       [1mJob[0m       │        [1mSpeciality[0m        │  [1mAlive[0m  │
-	// ├──────────────────────┼────────────────┼─────────────────┼──────────────────────────┼─────────┤
-	// │  James Holden        │  Montana 🌎    │  Captain 🚀     │  Tilting windmills       │  true   │
-	// │  Amos Burton         │  Baltimore 🌎  │  Mechanic 🔧    │  Specific people skills  │  true   │
-	// │  Naomi Nagata        │  Pallas 🌌     │  Mechanic 💻    │  Spicy red food          │  true   │
-	// │  Alex Kamal          │  Mars 🔴       │  Pilot 🎧       │  Cowboys                 │  false  │
-	// │  Joe Miller          │  Ceres 🌌      │  Cop 👮         │  Doors 'n corners        │  true   │
-	// │  Chrisjen Avasarala  │  Earth 🌏      │  Politician 🖕  │  Insults                 │  true   │
-	// │  Prax Meng           │  Ganymede 🌌   │  Botanist 🌻    │  Plant metaphors         │  true   │
-	// │  Klaes Ashford       │  The belt 🌌   │  Pirate 🕱       │  Singing                 │   😢    │
-	// │  Adolphus Murtry     │  Earth 🌎      │  Security 💂    │  General twattery        │  false  │
-	// │  Fred Johnson        │  Earth 🌎      │  Colonol 🎖      │  Beltalowda              │  false  │
-	// └──────────────────────┴────────────────┴─────────────────┴──────────────────────────┴─────────┘
+	// TODO: obscure bug here: the width of the last column is too wide. This is
+	// because it calculated the width for "three" before. To reset this we need
+	// to scan all the rows; meh.
+	tbl = New("one", "two", "three").Close(CloseLeft|CloseRight).StringRows("\x00", "\n", true,
+		"1\x002\x003\n4\x005\x006")
+	test(t, tbl.Horizontal, `
+		│   1   │   2   │    3    │
+		├───────┼───────┼─────────┤
+		│  4    │  5    │  6      │
+	`)
+}
+
+func TestAlign(t *testing.T) {
+	tbl := New("int", "float", "int64", "uint", "-- complex --", "forceleft").Close(CloseLeft|CloseRight).
+		AlignCol(5, Left).
+		Rows(1, 1.1, int64(-2), 3, complex(5, 6), 9)
+
+	test(t, tbl.Horizontal, `
+		│  int  │  float  │  int64  │  uint  │  -- complex --  │  forceleft  │
+		├───────┼─────────┼─────────┼────────┼─────────────────┼─────────────┤
+		│    1  │    1.1  │     -2  │     3  │         (5+6i)  │  9          │
+	`)
+
+	// Doesn't align on purpose.
+	// TODO: this is too wide though
+	test(t, tbl.Vertical, `
+		│  int            │  1              │
+		│  float          │  1.1            │
+		│  int64          │  -2             │
+		│  uint           │  3              │
+		│  -- complex --  │  (5+6i)         │
+		│  forceleft      │  9              │
+	`)
+}
+
+func TestPrintAs(t *testing.T) {
+	tbl := New("s").Close(CloseLeft|CloseRight).PrintCol(0, "%q").Row("asd")
+
+	test(t, tbl.Horizontal, `
+		│    s    │
+		├─────────┤
+		│  "asd"  │
+	`)
+
+	test(t, tbl.Vertical, `
+		│  s  │  "asd"  │
+	`)
+}
+
+func TestPrintAsFunc(t *testing.T) {
+	tbl := New("f1", "f2", "f3", "f4", "f5", "n1", "n2", "n3", "n4").Close(CloseLeft|CloseRight).
+		PrintFuncCol(0, PrintAsFloat(2)).
+		PrintFuncCol(1, PrintAsFloat(6)).
+		PrintFuncCol(2, PrintAsFloat(3)).
+		PrintFuncCol(3, PrintAsFloat(0)).
+		PrintFuncCol(4, PrintAsFloat(0)).
+		PrintFuncCol(5, PrintAsNum).
+		PrintFuncCol(6, PrintAsNum).
+		PrintFuncCol(7, PrintAsNum).
+		PrintFuncCol(8, PrintAsNum).
+		PrintFuncCol(9, PrintAsNum).
+		Row(1.5, 1.5, 0.8, 1.4, 1.6, 1234, uint64(123456789), 12341.123131, int16(-9999))
+
+	test(t, tbl.Horizontal, `
+		│   f1   │     f2     │   f3   │  f4  │  f5  │   n1    │      n2       │    n3    │    n4    │
+		├────────┼────────────┼────────┼──────┼──────┼─────────┼───────────────┼──────────┼──────────┤
+		│  1.50  │  1.500000  │  .800  │   1  │   2  │  1,234  │  123,456,789  │  12,341  │  -9,999  │
+	`)
+
 }

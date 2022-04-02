@@ -5,8 +5,9 @@ import (
 	"strconv"
 )
 
-// PrintAsFloat prints n as a float with with at most 1 digit after the decimal
-// point.
+// PrintAsFloat prints n as a float with the given percision.
+//
+// Use perc=0 to round to the nearest natural number.
 func PrintAsFloat(perc int) PrintAsFunc {
 	return func(v interface{}) string {
 		var f float64
@@ -22,9 +23,9 @@ func PrintAsFloat(perc int) PrintAsFunc {
 		}
 
 		if f < 1 {
-			return fmt.Sprintf("%.1f", f)[1:]
+			return fmt.Sprintf("%."+strconv.Itoa(perc)+"f", f)[1:]
 		}
-		return fmt.Sprintf("%0.0f", v)
+		return fmt.Sprintf("%0."+strconv.Itoa(perc)+"f", v)
 	}
 }
 
