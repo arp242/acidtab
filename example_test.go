@@ -210,7 +210,7 @@ func Example_stringRows() {
 			return "\x00"
 		})
 
-	t.StringRows("|", "\n", false, `
+	t.RowsFromString("|", "\n", false, `
 		James Holden       | Montana 🌎   | Captain 🚀    | Tilting windmills      | true
 		Amos Burton        | Baltimore 🌎 | Mechanic 🔧   | Specific people skills | true
 		Naomi Nagata       | Pallas 🌌    | Mechanic 💻   | Spicy red food         | true

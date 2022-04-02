@@ -234,8 +234,8 @@ func (t *Table) Rows(r ...interface{}) *Table {
 	return t
 }
 
-// StringRows adds multiple rows from a single string. Columns are separated by
-// colDelim, and rows by rowDelim.
+// RowsFromString adds multiple rows from a single string. Columns are separated
+// by colDelim, and rows by rowDelim.
 //
 // Leading and trailing whitespace will be removed, as will all whitespace
 // surrounding the colDelim. All items will be added as strings, but you can
@@ -256,7 +256,7 @@ func (t *Table) Rows(r ...interface{}) *Table {
 // easier to write.
 //
 // Another use case is to feed output from a program or function.
-func (t *Table) StringRows(colDelim, rowDelim string, header bool, rows string) *Table {
+func (t *Table) RowsFromString(colDelim, rowDelim string, header bool, rows string) *Table {
 	r := strings.Split(strings.TrimSpace(rows), rowDelim)
 	if header {
 		t = t.Header(t.pHeader, strings.Split(r[0], colDelim)...)

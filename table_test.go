@@ -201,8 +201,8 @@ func TestGrow(t *testing.T) {
 	test("16 1 [[zxc]]")
 }
 
-func TestStringRows(t *testing.T) {
-	tbl := New("one", "two", "three").Close(CloseLeft|CloseRight).StringRows("\x00", "\n", false,
+func TestRowsFromString(t *testing.T) {
+	tbl := New("one", "two", "three").Close(CloseLeft|CloseRight).RowsFromString("\x00", "\n", false,
 		"1\x002\x003\n4\x005\x006")
 	test(t, tbl.Horizontal, `
 		│  one  │  two  │  three  │
@@ -214,7 +214,7 @@ func TestStringRows(t *testing.T) {
 	// TODO: obscure bug here: the width of the last column is too wide. This is
 	// because it calculated the width for "three" before. To reset this we need
 	// to scan all the rows; meh.
-	tbl = New("one", "two", "three").Close(CloseLeft|CloseRight).StringRows("\x00", "\n", true,
+	tbl = New("one", "two", "three").Close(CloseLeft|CloseRight).RowsFromString("\x00", "\n", true,
 		"1\x002\x003\n4\x005\x006")
 	test(t, tbl.Horizontal, `
 		│   1   │   2   │    3    │
