@@ -80,7 +80,7 @@ func Example_coloptions() {
 	t.FormatCol(3, "%q") // Print column 3 as %q
 
 	// Callback for column 4
-	t.FormatColFunc(4, func(v interface{}) string {
+	t.FormatColFunc(4, func(v any) string {
 		if b, ok := v.(bool); ok {
 			return map[bool]string{true: "yes", false: "no"}[b]
 		}
@@ -154,7 +154,7 @@ func Example_format() {
 	t := acidtab.New(bold("Name"), bold("Origin"), bold("Job"), bold("Speciality"), bold("Alive")).
 		Close(acidtab.CloseAll).
 		AlignCol(4, acidtab.Center).
-		FormatColFunc(4, func(v interface{}) string {
+		FormatColFunc(4, func(v any) string {
 			if b, ok := v.(bool); ok {
 				return map[bool]string{
 					true:  "\x1b[32m ✔ \x1b[0m",
@@ -200,7 +200,7 @@ func Example_stringRows() {
 	t := acidtab.New(bold("Name"), bold("Origin"), bold("Job"), bold("Speciality"), bold("Alive")).
 		Close(acidtab.CloseAll).
 		AlignCol(4, acidtab.Center).
-		FormatColFunc(4, func(v interface{}) string {
+		FormatColFunc(4, func(v any) string {
 			if b, ok := v.(bool); ok {
 				return map[bool]string{
 					true:  "\x1b[32m ✔ \x1b[0m",

@@ -7,7 +7,7 @@ var benchTable = func() *Table {
 		Header(true).
 		Prefix("  ").
 		AlignCol(4, Center).
-		FormatColFunc(4, func(v interface{}) string {
+		FormatColFunc(4, func(v any) string {
 			switch vv := v.(type) {
 			default:
 				return "\x00"
@@ -21,7 +21,7 @@ var benchTable = func() *Table {
 	return t
 }
 
-var benchRows = []interface{}{
+var benchRows = []any{
 	"James Holden", "Montana", "Captain", "Tilting windmills", true,
 	"Amos Burton", "Baltimore", "Mechanic", "Specific people skills", true,
 	"Naomi Nagata", "Pallas", "Mechanic", "Spicy red food", true,

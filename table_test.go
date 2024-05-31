@@ -139,7 +139,7 @@ func TestWidthAndClose(t *testing.T) {
 	bold := func(s string) string { return "\x1b[1m" + s + "\x1b[0m" }
 	tbl := New(bold("Name"), bold("Origin"), bold("Job"), bold("Alive")).
 		AlignCol(3, Center).
-		FormatColFunc(3, func(v interface{}) string {
+		FormatColFunc(3, func(v any) string {
 			if b, ok := v.(bool); ok {
 				return map[bool]string{
 					true:  "\x1b[32m ✔ \x1b[0m",

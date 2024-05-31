@@ -12,7 +12,7 @@ type (
 	Close        uint8  // Which sides of the table to "close".
 	Align        uint8  // Alignment for columns.
 	FormatAs     string // How to print a value; fmt format string (e.g. "%q", "%#v", etc.)
-	FormatAsFunc func(v interface{}) string
+	FormatAsFunc func(v any) string
 
 	// Borders to use.
 	Borders struct {
@@ -216,10 +216,10 @@ func (t *Table) Grow(n int) {
 //
 // For example:
 //
-//   t.Rows(
-//       "row1", "row1",
-//       "row2", "row2",)
-func (t *Table) Rows(r ...interface{}) *Table {
+//	t.Rows(
+//	    "row1", "row1",
+//	    "row2", "row2",)
+func (t *Table) Rows(r ...any) *Table {
 	l := len(t.header)
 	if len(r)%l != 0 {
 		t.err = fmt.Errorf(
@@ -243,10 +243,10 @@ func (t *Table) Rows(r ...interface{}) *Table {
 //
 // For example:
 //
-//   t.Rows("|", "\n", `
-//       row1 | row1
-//       row2 | row2
-//   `)
+//	t.Rows("|", "\n", `
+//	    row1 | row1
+//	    row2 | row2
+//	`)
 //
 // If header is set the first row will be used as the header, overriding any
 // header that was given with New().
@@ -275,7 +275,7 @@ func (t *Table) RowsFromString(colDelim, rowDelim string, header bool, rows stri
 // Remaining columns will be filled with spaces if the number of values is lower
 // than the numbers of headers. It will set an error if the number of values is
 // greater.
-func (t *Table) Row(r ...interface{}) *Table {
+func (t *Table) Row(r ...any) *Table {
 	if len(r) > len(t.header) {
 		t.err = fmt.Errorf(
 			"Row: adding row %d: too many values (%d); there are only %d headers",
@@ -316,7 +316,7 @@ func (t *Table) Row(r ...interface{}) *Table {
 	return t
 }
 
-func isNumber(i interface{}) bool {
+func isNumber(i any) bool {
 	switch i.(type) {
 	default:
 		return false
@@ -327,7 +327,7 @@ func isNumber(i interface{}) bool {
 
 func (t *Table) stringRow(colDelim, row string) {
 	cols := strings.Split(row, colDelim)
-	r := make([]interface{}, 0, len(cols))
+	r := make([]any, 0, len(cols))
 	for _, c := range cols {
 		r = append(r, strings.TrimSpace(c))
 	}

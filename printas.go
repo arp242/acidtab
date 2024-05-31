@@ -9,7 +9,7 @@ import (
 //
 // Use perc=0 to round to the nearest natural number.
 func FormatAsFloat(perc int) FormatAsFunc {
-	return func(v interface{}) string {
+	return func(v any) string {
 		var f float64
 		switch vv := v.(type) {
 		default:
@@ -31,7 +31,7 @@ func FormatAsFloat(perc int) FormatAsFunc {
 
 // FormatAsNum prints n as a number with , as thousands separators.
 func FormatAsNum() FormatAsFunc {
-	return func(v interface{}) string {
+	return func(v any) string {
 		// TODO: allow configuring this.
 		// There's also "indian style" where the grouping is different, but full
 		// locale parsing isn't really a goal here.
