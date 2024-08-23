@@ -107,17 +107,17 @@ func Example_vertical() {
 	t.Vertical(os.Stdout)
 
 	// Output:
-	//   Name        │  Prax Meng
-	//   Origin      │  Ganymede
-	//   Job         │  Botanist
-	//   Speciality  │  Plant metaphors
-	//   Alive       │  true
-	// ──────────────┼───────────────────
-	//   Name        │  Klaes Ashford
-	//   Origin      │  The belt
-	//   Job         │  Pirate
-	//   Speciality  │  Singing
-	//   Alive       │  😢
+	// Name        │  Prax Meng
+	// Origin      │  Ganymede
+	// Job         │  Botanist
+	// Speciality  │  Plant metaphors
+	// Alive       │  true
+	// ────────────┼─────────────────
+	// Name        │  Klaes Ashford
+	// Origin      │  The belt
+	// Job         │  Pirate
+	// Speciality  │  Singing
+	// Alive       │  😢
 }
 
 func Example_chain() {
@@ -133,19 +133,19 @@ func Example_chain() {
 		Vertical(os.Stdout)
 
 	// Output:
-	//  ────────────┬──────────────────
-	//   Name       │ Adolphus Murtry
-	//   Origin     │ "Earth"
-	//   Job        │ Security
-	//   Speciality │ General twattery
-	//   Alive      │ false
-	//  ────────────┼──────────────────
-	//   Name       │ Fred Johnson
-	//   Origin     │ "Earth"
-	//   Job        │ Colonol
-	//   Speciality │ Beltalowda
-	//   Alive      │ false
-	//  ────────────┴──────────────────
+	//  ───────────┬─────────────────
+	//  Name       │ Adolphus Murtry
+	//  Origin     │ "Earth"
+	//  Job        │ Security
+	//  Speciality │ General twattery
+	//  Alive      │ false
+	//  ───────────┼─────────────────
+	//  Name       │ Fred Johnson
+	//  Origin     │ "Earth"
+	//  Job        │ Colonol
+	//  Speciality │ Beltalowda
+	//  Alive      │ false
+	//  ───────────┴─────────────────
 }
 
 func Example_format() {

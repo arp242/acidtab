@@ -55,8 +55,8 @@ func (t Table) Vertical(w io.Writer) {
 			b.WriteString(t.prefix)
 			if t.close&CloseLeft != 0 {
 				b.WriteRune(t.borders.Bar)
+				b.WriteString(t.pad)
 			}
-			b.WriteString(t.pad)
 			b.WriteString(t.header[j])
 			b.WriteString(t.pad)
 			b.WriteString(alignHeader[j])
@@ -89,15 +89,15 @@ func (t Table) vertLine(b writer, padStr, headerStr, valueStr string, cross, fir
 	b.WriteString(t.prefix)
 	if t.close&CloseLeft != 0 {
 		b.WriteRune(first)
+		b.WriteString(padStr)
 	}
-	b.WriteString(padStr)
 	b.WriteString(headerStr)
 	b.WriteString(padStr)
 	b.WriteRune(cross)
 	b.WriteString(padStr)
 	b.WriteString(valueStr)
-	b.WriteString(padStr)
 	if t.close&CloseRight != 0 {
+		b.WriteString(padStr)
 		b.WriteRune(last)
 	}
 	b.WriteByte('\n')
